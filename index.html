@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Quiz Builder</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <h1>Quiz Builder</h1>
+
+  <section id="builder">
+    <label>Quiz title</label>
+    <input type="text" id="quizTitle">
+
+    <label>Number of questions</label>
+    <select id="questionCount">
+      <option value="5">5 Questions</option>
+      <option value="10">10 Questions</option>
+    </select>
+
+    <button onclick="generateQuestionFields()">Create Quiz Form</button>
+
+    <div id="questionsContainer"></div>
+
+    <button onclick="previewQuiz()">Preview Quiz</button>
+    <button onclick="exportQuizJson()">Export Quiz JSON</button>
+    <button onclick="exportStandaloneQuiz()">Export Standalone Quiz</button>
+
+    <hr>
+
+    <label>Import Quiz JSON</label>
+    <input type="file" id="importJsonFile" accept=".json">
+    <button onclick="importQuizJson()">Import Quiz JSON</button>
+
+    <label>Import Standalone HTML</label>
+    <input type="file" id="importHtmlFile" accept=".html">
+    <button onclick="importStandaloneHtml()">Import Standalone HTML</button>
+  </section>
+
+  <section id="quizPreview" style="display:none;">
+    <h2 id="previewTitle"></h2>
+    <div id="quizContainer"></div>
+    <button onclick="submitQuiz()">Submit Quiz</button>
+  </section>
+
+  <section id="results" style="display:none;">
+    <h2>Quiz Complete</h2>
+    <p id="scoreText"></p>
+    <button onclick="restartBuilder()">Back to Builder</button>
+  </section>
+
+  <script src="script.js"></script>
+  <!-- <button type="button" onclick="formatEditorText('${id}', 'superscript')">X²</button>
+  <button type="button" onclick="formatEditorText('${id}', 'subscript')">X₂</button> -->
+</body>
+</html>
