@@ -57,6 +57,8 @@ function createRichEditor(id) {
           <option value="√">√</option>
           <option value="π">π</option>
         </select>
+
+        <button type="button" class="html-toggle-btn" onclick="toggleHtmlMode('${id}')" title="Edit raw HTML">&lt;/&gt;</button>
       </div>
 
       <div
@@ -65,6 +67,12 @@ function createRichEditor(id) {
         contenteditable="true"
         oninput="handleEditorInput('${id}')"
       ></div>
+      <textarea
+        id="${id}_html"
+        class="html-code-editor"
+        style="display:none;"
+        oninput="handleEditorInput('${id}')"
+      ></textarea>
     </div>
   `;
 }
@@ -95,6 +103,7 @@ function createAnswerEditor(id) {
         <option value="≤">≤</option><option value="≥">≥</option>
         <option value="√">√</option><option value="π">π</option>
       </select>
+      <button type="button" class="html-toggle-btn" onclick="toggleHtmlMode('${id}')" title="Edit raw HTML">&lt;/&gt;</button>
     </div>
   `;
   return `
@@ -103,6 +112,12 @@ function createAnswerEditor(id) {
       <div class="radio-circle"></div>
       <div id="${id}" class="slide-editable" contenteditable="true" oninput="handleEditorInput('${id}')"></div>
     </div>
+    <textarea
+      id="${id}_html"
+      class="html-code-editor"
+      style="display:none;"
+      oninput="handleEditorInput('${id}')"
+    ></textarea>
   `;
 }
 
@@ -146,16 +161,22 @@ function insertSymbol(editorId, symbol, dropdown) {
 function toggleHtmlMode(id) {
   const visual = document.getElementById(id);
   const raw    = document.getElementById(`${id}_html`);
-  if (!raw) return;
+  if (!visual || !raw) return;
 
-  if (raw.style.display === "none") {
+  const switchingToCode = raw.style.display === "none";
+
+  if (switchingToCode) {
+    // Visual → Code: copy current HTML into the textarea
     raw.value = visual.innerHTML;
     visual.style.display = "none";
     raw.style.display = "block";
+    raw.focus();
   } else {
+    // Code → Visual: copy edited HTML back into the editable
     visual.innerHTML = raw.value;
     raw.style.display = "none";
     visual.style.display = "block";
+    handleEditorInput(id);
   }
 }
 
@@ -1057,17 +1078,18 @@ function buildStandaloneQuizHtml(exportData, title) {
   <script>
     const originalQuizData = ${JSON.stringify(exportData.questions)};
     let activeQuiz = [], currentQuestionIndex = 0, selectedAnswerIndex = null;
-    let score = 0, submitted = false, reviewMode = false, userAnswers = [];
+    let score = 0, submitted = false, reviewMode = false, userAnswers = [], completedFired = false;
 
     function shuffleArray(arr) { return [...arr].sort(() => Math.random() - 0.5); }
 
     function startQuiz() {
+      if (typeof started === "function") started();
       activeQuiz = shuffleArray(originalQuizData).map(q => ({
         ...q,
         answers: shuffleArray(q.answers.map((a, i) => ({ text: a, isCorrect: i === q.correctIndex })))
       }));
       currentQuestionIndex = 0; selectedAnswerIndex = null;
-      score = 0; submitted = false; reviewMode = false; userAnswers = [];
+      score = 0; submitted = false; reviewMode = false; userAnswers = []; completedFired = false;
       removeReviewNavigation();
       showSlide("questionSlide");
       renderQuestion();
@@ -1147,6 +1169,11 @@ function buildStandaloneQuizHtml(exportData, title) {
       removeReviewNavigation();
       showSlide("resultsSlide");
       document.getElementById("scoreDisplay").textContent = \`\${score}/\${activeQuiz.length}\`;
+      if (!completedFired) {
+        completedFired = true;
+        const percentage = Math.round((score / activeQuiz.length) * 100);
+        if (typeof completed === "function") completed(percentage);
+      }
       renderStars(score, activeQuiz.length);
     }
 
