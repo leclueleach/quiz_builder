@@ -30,8 +30,10 @@
         <button type="button" onclick="formatEditorText('quizTitle', 'underline')"><u>U</u></button>
         <button type="button" onclick="formatEditorText('quizTitle', 'superscript')">X²</button>
         <button type="button" onclick="formatEditorText('quizTitle', 'subscript')">X₂</button>
+        <button type="button" class="html-toggle-btn" onclick="toggleHtmlMode('quizTitle')" title="Edit raw HTML">&lt;/&gt;</button>
       </div>
       <div id="quizTitle" class="title-editable slide-editable" contenteditable="true" placeholder="e.g. Chapter 3 Review"></div>
+      <textarea id="quizTitle_html" class="html-code-editor" style="display:none;"></textarea>
     </div>
 
     <label>File name <span style="font-size:12px;color:#888;">(used when saving — no spaces or special characters)</span></label>
