@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="250" height="260" viewBox="0 0 250 260">
+  <rect width="250" height="260" rx="16" fill="#7cc576" opacity="0.12"/>
+  <path d="M125 55 l14 42 h44 l-36 26 l14 42 l-36 -26 l-36 26 l14 -42 l-36 -26 h44 z" fill="#7cc576" opacity="0.7"/>
+  <text x="125" y="215" font-family="Arial" font-size="20" font-weight="bold" fill="#5a9e54" text-anchor="middle">Brilliant</text>
+</svg>

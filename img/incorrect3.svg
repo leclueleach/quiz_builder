@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="250" height="260" viewBox="0 0 250 260">
+  <rect width="250" height="260" rx="16" fill="#e8527f" opacity="0.12"/>
+  <path d="M125 70 a45 45 0 1 1 -42 29" stroke="#e8527f" stroke-width="10" fill="none" stroke-linecap="round" opacity="0.8"/>
+  <path d="M125 60 l-2 22 l20 -10 z" fill="#e8527f" opacity="0.8"/>
+  <text x="125" y="220" font-family="Arial" font-size="20" font-weight="bold" fill="#e8527f" text-anchor="middle">Try again</text>
+</svg>
