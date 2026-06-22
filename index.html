@@ -6,6 +6,8 @@
   <link rel="stylesheet" href="style.css">
   <!-- docx browser build — enables in-browser Word export -->
   <script src="https://unpkg.com/docx@8/build/index.js"></script>
+  <!-- JSZip — bundles the export folder (story.html + img/) into a downloadable ZIP -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 </head>
 <body>
 
@@ -51,7 +53,7 @@
     <div id="questionsContainer"></div>
 
     <button type="button" onclick="previewQuiz()">Preview Quiz</button>
-    <button type="button" onclick="exportStandaloneQuiz()">Export Standalone Quiz</button>
+    <button type="button" onclick="exportStandaloneQuiz()">Export Quiz (Folder)</button>
 
     <hr>
 

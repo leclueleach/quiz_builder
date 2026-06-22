@@ -437,11 +437,64 @@ function importQuizJson() {
 
 // ── Standalone HTML export / import ───────────────────────
 
-function exportStandaloneQuiz() {
+// List of all image files the quiz references (kept in sync with img/ folder)
+const EXPORT_IMAGE_FILES = [
+  "image1.svg", "image2.svg", "image3.svg", "image4.svg", "image5.svg",
+  "correct1.svg", "correct2.svg", "correct3.svg", "correct4.svg", "correct5.svg",
+  "incorrect1.svg", "incorrect2.svg", "incorrect3.svg", "incorrect4.svg", "incorrect5.svg"
+];
+
+async function exportStandaloneQuiz() {
   if (!validateQuizForm()) return;
+
   const data = buildQuizExportData();
   const html = buildStandaloneQuizHtml(data, data.title);
-  downloadBlob(html, `${getFilename()}.html`, "text/html");
+  const folderName = getFilename();
+
+  if (typeof JSZip === "undefined") {
+    // Fallback: JSZip not loaded — just download the HTML
+    downloadBlob(html, `${folderName}.html`, "text/html");
+    return;
+  }
+
+  const zip = new JSZip();
+  const folder = zip.folder(folderName);
+
+  // story.html at the folder root
+  folder.file("story.html", html);
+
+  // Bundle the img/ folder by fetching each image file
+  const imgFolder = folder.folder("img");
+  let imagesBundled = 0;
+
+  await Promise.all(EXPORT_IMAGE_FILES.map(async (name) => {
+    try {
+      const res = await fetch(`img/${name}`);
+      if (res.ok) {
+        const blob = await res.blob();
+        imgFolder.file(name, blob);
+        imagesBundled++;
+      }
+    } catch (e) {
+      // ignore — handled below
+    }
+  }));
+
+  if (imagesBundled === 0) {
+    // Could not fetch images (likely running from file://). Add a readme note.
+    imgFolder.file("README.txt",
+      "Images could not be bundled automatically.\n" +
+      "Copy your 15 image files (image1-5, correct1-5, incorrect1-5) into this img/ folder."
+    );
+  }
+
+  const blob = await zip.generateAsync({ type: "blob" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `${folderName}.zip`;
+  a.click();
+  URL.revokeObjectURL(url);
 }
 
 function importStandaloneHtml() {
@@ -932,16 +985,12 @@ function buildStandaloneQuizHtml(exportData, title) {
       color: #8aa7b5;
       font-size: 24px;
     }
-    .placeholder-person {
+    .question-image {
       width: 300px;
       height: 520px;
+      object-fit: cover;
+      border-radius: 20px;
       background: #e9f1f5;
-      border-radius: 150px 150px 20px 20px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      padding: 30px;
     }
     .feedback-panel {
       display: none;
@@ -957,9 +1006,11 @@ function buildStandaloneQuizHtml(exportData, title) {
       display: flex;
       align-items: center;
       justify-content: center;
-      color: #6b8795;
-      font-size: 22px;
-      text-align: center;
+    }
+    .feedback-img {
+      max-height: 260px;
+      max-width: 100%;
+      object-fit: contain;
     }
     .feedback-badge {
       width: 250px;
@@ -1051,10 +1102,10 @@ function buildStandaloneQuizHtml(exportData, title) {
     </div>
     <div class="question-right">
       <div id="questionImage" class="image-placeholder">
-        <div class="placeholder-person">Image placeholder</div>
+        <img id="questionImageEl" class="question-image" src="" alt="Question image">
       </div>
       <div id="feedbackPanel" class="feedback-panel">
-        <div class="feedback-image">Feedback image placeholder</div>
+        <div class="feedback-image"><img id="feedbackImageEl" class="feedback-img" src="" alt="Feedback image"></div>
         <div id="feedbackBadge" class="feedback-badge"></div>
         <div id="feedbackText" class="feedback-text"></div>
         <button id="continueBtn" class="continue-btn" onclick="continueQuiz()">CONTINUE</button>
@@ -1082,14 +1133,117 @@ function buildStandaloneQuizHtml(exportData, title) {
 
     function shuffleArray(arr) { return [...arr].sort(() => Math.random() - 0.5); }
 
+    // Available question images (sit in the img/ folder next to this file)
+    const QUIZ_IMAGES = [
+      "img/image1.svg",
+      "img/image2.svg",
+      "img/image3.svg",
+      "img/image4.svg",
+      "img/image5.svg"
+    ];
+
+    // Feedback images: 5 for correct, 5 for incorrect
+    const CORRECT_IMAGES = [
+      "img/correct1.svg",
+      "img/correct2.svg",
+      "img/correct3.svg",
+      "img/correct4.svg",
+      "img/correct5.svg"
+    ];
+    const INCORRECT_IMAGES = [
+      "img/incorrect1.svg",
+      "img/incorrect2.svg",
+      "img/incorrect3.svg",
+      "img/incorrect4.svg",
+      "img/incorrect5.svg"
+    ];
+
+    // Shuffled queues + pointers, set up at quiz start
+    let correctQueue = [], incorrectQueue = [];
+    let correctPtr = 0, incorrectPtr = 0;
+
+    // Pull the next feedback image, cycling through a shuffled queue.
+    // Re-shuffles when exhausted, avoiding an immediate repeat at the seam.
+    function nextFeedbackImage(isCorrect) {
+      if (isCorrect) {
+        if (correctPtr >= correctQueue.length) {
+          const last = correctQueue[correctQueue.length - 1];
+          do { correctQueue = shuffleArray(CORRECT_IMAGES); }
+          while (correctQueue.length > 1 && correctQueue[0] === last);
+          correctPtr = 0;
+        }
+        return correctQueue[correctPtr++];
+      } else {
+        if (incorrectPtr >= incorrectQueue.length) {
+          const last = incorrectQueue[incorrectQueue.length - 1];
+          do { incorrectQueue = shuffleArray(INCORRECT_IMAGES); }
+          while (incorrectQueue.length > 1 && incorrectQueue[0] === last);
+          incorrectPtr = 0;
+        }
+        return incorrectQueue[incorrectPtr++];
+      }
+    }
+
+    /**
+     * Assign one image per question.
+     * - If questions <= images: each image used at most once (no repeats).
+     * - If questions > images: images repeat as evenly as possible, but the
+     *   same image never appears on two consecutive questions.
+     */
+    function assignImages(count) {
+      const imgCount = QUIZ_IMAGES.length;
+
+      // Simple case: enough unique images, just shuffle and slice
+      if (count <= imgCount) {
+        return shuffleArray(QUIZ_IMAGES).slice(0, count);
+      }
+
+      // Build a pool where each image appears the needed number of times
+      const pool = [];
+      let i = 0;
+      while (pool.length < count) {
+        pool.push(QUIZ_IMAGES[i % imgCount]);
+        i++;
+      }
+
+      // Shuffle, then fix any adjacent duplicates by swapping forward
+      let result = shuffleArray(pool);
+      for (let attempt = 0; attempt < 50; attempt++) {
+        let clean = true;
+        for (let j = 1; j < result.length; j++) {
+          if (result[j] === result[j - 1]) {
+            // find a later item that differs from both neighbours, swap it in
+            let swapped = false;
+            for (let k = j + 1; k < result.length; k++) {
+              if (result[k] !== result[j - 1] &&
+                  (j + 1 >= result.length || result[k] !== result[j + 1])) {
+                [result[j], result[k]] = [result[k], result[j]];
+                swapped = true;
+                break;
+              }
+            }
+            if (!swapped) clean = false;
+          }
+        }
+        if (clean) break;
+        result = shuffleArray(pool); // reshuffle and retry if stuck
+      }
+      return result;
+    }
+
     function startQuiz() {
       if (typeof started === "function") started();
-      activeQuiz = shuffleArray(originalQuizData).map(q => ({
+      const imageOrder = assignImages(originalQuizData.length);
+      activeQuiz = shuffleArray(originalQuizData).map((q, idx) => ({
         ...q,
         answers: shuffleArray(q.answers.map((a, i) => ({ text: a, isCorrect: i === q.correctIndex })))
       }));
+      // Attach an image to each question after shuffling the question order
+      activeQuiz.forEach((q, idx) => { q.image = imageOrder[idx]; });
       currentQuestionIndex = 0; selectedAnswerIndex = null;
       score = 0; submitted = false; reviewMode = false; userAnswers = []; completedFired = false;
+      correctQueue = shuffleArray(CORRECT_IMAGES); correctPtr = 0;
+      incorrectQueue = shuffleArray(INCORRECT_IMAGES); incorrectPtr = 0;
       removeReviewNavigation();
       showSlide("questionSlide");
       renderQuestion();
@@ -1108,6 +1262,7 @@ function buildStandaloneQuizHtml(exportData, title) {
       document.getElementById("submitBtn").style.display = "none";
       document.getElementById("feedbackPanel").classList.remove("show");
       document.getElementById("questionImage").style.display = "flex";
+      document.getElementById("questionImageEl").src = q.image || "";
 
       const container = document.getElementById("answersContainer");
       container.innerHTML = "";
@@ -1134,13 +1289,14 @@ function buildStandaloneQuizHtml(exportData, title) {
       const answer = q.answers[selectedAnswerIndex];
       const isCorrect = answer.isCorrect;
       if (isCorrect) score++;
-      userAnswers[currentQuestionIndex] = { selectedAnswerIndex, isCorrect };
+      const fbImage = nextFeedbackImage(isCorrect);
+      userAnswers[currentQuestionIndex] = { selectedAnswerIndex, isCorrect, fbImage };
       document.getElementById("submitBtn").style.display = "none";
       document.getElementById("questionImage").style.display = "none";
-      renderSubmittedState(q, selectedAnswerIndex, isCorrect, false);
+      renderSubmittedState(q, selectedAnswerIndex, isCorrect, false, fbImage);
     }
 
-    function renderSubmittedState(q, selectedIndex, isCorrect, isReview) {
+    function renderSubmittedState(q, selectedIndex, isCorrect, isReview, fbImage) {
       document.querySelectorAll(".answer-card").forEach((card, i) => {
         const a = q.answers[i];
         card.onclick = null;
@@ -1154,6 +1310,7 @@ function buildStandaloneQuizHtml(exportData, title) {
       const badge = document.getElementById("feedbackBadge");
       badge.textContent = isCorrect ? "CORRECT" : "INCORRECT";
       badge.className = "feedback-badge " + (isCorrect ? "correct" : "incorrect");
+      document.getElementById("feedbackImageEl").src = fbImage || "";
       document.getElementById("feedbackText").innerHTML = q.feedback || "No feedback added.";
       document.getElementById("feedbackPanel").classList.add("show");
       document.getElementById("continueBtn").style.display = isReview ? "none" : "block";
@@ -1213,7 +1370,7 @@ function buildStandaloneQuizHtml(exportData, title) {
         container.appendChild(card);
       });
 
-      renderSubmittedState(q, saved ? saved.selectedAnswerIndex : null, saved ? saved.isCorrect : false, true);
+      renderSubmittedState(q, saved ? saved.selectedAnswerIndex : null, saved ? saved.isCorrect : false, true, saved ? saved.fbImage : "");
       addReviewNavigation();
     }
 

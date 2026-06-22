@@ -1,0 +1,7 @@
+function started() {
+  console.log("✅ started() called");
+}
+
+function completed(score) {
+  console.log("✅ completed() called with score:", score);
+}
