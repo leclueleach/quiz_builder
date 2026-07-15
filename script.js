@@ -458,13 +458,14 @@ async function exportStandaloneQuiz() {
   }
 
   const zip = new JSZip();
-  const folder = zip.folder(folderName);
 
-  // story.html at the folder root
-  folder.file("story.html", html);
+  // Put story.html and img/ directly at the ZIP root.
+  // The downloaded file is still named after the quiz, but opening it
+  // no longer reveals a second folder with the same name.
+  zip.file("story.html", html);
 
-  // Bundle the img/ folder by fetching each image file
-  const imgFolder = folder.folder("img");
+  // Bundle the img/ folder directly at the ZIP root
+  const imgFolder = zip.folder("img");
   let imagesBundled = 0;
 
   await Promise.all(EXPORT_IMAGE_FILES.map(async (name) => {
@@ -814,29 +815,41 @@ function buildStandaloneQuizHtml(exportData, title) {
   <meta name="quiz-title" content="${title}">
   <meta name="quiz-filename" content="${safeFilename}">
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     *, *::before, *::after { box-sizing: border-box; }
 
-    body {
+    html, body {
       margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    body {
       font-family: Arial, sans-serif;
       color: #052d43;
       background: white;
     }
 
     .slide {
-      width: 100vw;
-      height: 100vh;
+      width: 720px;
+      height: 540px;
       display: none;
-      position: relative;
+      position: absolute;
+      left: 50%;
+      top: 50%;
       overflow: hidden;
+      transform: translate(-50%, -50%) scale(var(--quiz-scale, 1));
+      transform-origin: center center;
     }
     .slide.active { display: flex; }
 
-    /* ── Title slide ── */
+    /* ── Title slide: landscape 720 × 540 ── */
     .title-slide.active {
       display: grid;
       grid-template-columns: 34% 66%;
+      background: white;
     }
     .left-panel {
       background: #084371;
@@ -845,101 +858,126 @@ function buildStandaloneQuizHtml(exportData, title) {
     }
     .stripe {
       position: absolute;
-      width: 520px;
-      height: 34px;
+      width: 360px;
+      height: 24px;
       border-radius: 30px;
       transform: rotate(30deg);
-      left: -120px;
+      left: -90px;
     }
-    .stripe.pink   { background: #ef5774; top: 80px; }
-    .stripe.orange { background: #f57958; top: 135px; }
-    .stripe.blue   { background: #25b8d4; top: 230px; }
+    .stripe.pink   { background: #ef5774; top: 55px; }
+    .stripe.orange { background: #f57958; top: 95px; }
+    .stripe.blue   { background: #25b8d4; top: 165px; }
     .coursebook {
       position: absolute;
-      bottom: 55px;
-      left: 65px;
+      bottom: 24px;
+      left: 28px;
       color: white;
-      font-size: 34px;
-      letter-spacing: -1px;
+      font-size: 22px;
+      letter-spacing: -0.5px;
     }
     .title-content {
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding-bottom: 40px;
+      padding: 24px 32px;
     }
     .quiz-icon {
-      width: 115px;
-      height: 115px;
+      width: 76px;
+      height: 76px;
       border-radius: 50%;
       background: linear-gradient(135deg, #f47a52, #df3f7d);
       color: white;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 46px;
-      margin-bottom: 145px;
+      font-size: 32px;
+      margin-bottom: 42px;
+      flex-shrink: 0;
     }
     h1 {
-      font-size: 56px;
-      margin: 0 0 150px;
+      width: 100%;
+      max-width: 390px;
+      font-size: 34px;
+      line-height: 1.15;
+      margin: 0 0 48px;
       text-align: center;
       color: #052d43;
+      overflow-wrap: anywhere;
     }
     button {
       border: none;
       cursor: pointer;
       font-weight: bold;
-      font-size: 26px;
+      font-size: 20px;
       color: white;
       border-radius: 9px;
-      padding: 14px 70px;
+      padding: 12px 52px;
       background: #084371;
     }
     button:hover { opacity: 0.9; }
 
-    /* ── Question slide ── */
+    /* ── Question slide: landscape 720 × 540 ── */
     .question-slide.active {
       display: grid;
-      grid-template-columns: 64% 36%;
+      grid-template-columns: 62% 38%;
+      background: white;
     }
     .question-left {
-      padding-left: 33%;
-      padding-top: 14px;
-      padding-right: 25px;
+      height: 100%;
+      padding: 12px 18px 16px;
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
     }
     .counter {
       color: #008f8d;
-      font-size: 26px;
-      margin-bottom: 15px;
+      font-size: 18px;
+      margin-bottom: 8px;
+      flex-shrink: 0;
     }
     .question-box {
       background: #eef2f6;
-      border-radius: 15px;
-      padding: 48px 32px;
-      min-height: 225px;
-      font-size: 25px;
-      line-height: 1.25;
-      margin-bottom: 24px;
+      border-radius: 12px;
+      padding: 15px 18px;
+      height: 112px;
+      min-height: 112px;
+      font-size: 18px;
+      line-height: 1.22;
+      margin-bottom: 10px;
+      overflow: auto;
       overflow-wrap: anywhere;
-      word-break: break-word;
+    }
+    #answersContainer {
+      display: grid;
+      grid-template-rows: repeat(4, 1fr);
+      gap: 6px;
+      min-height: 0;
+      flex: 1;
     }
     .answer-card {
-      height: 115px;
-      border-radius: 15px;
+      min-height: 0;
+      height: auto;
+      border-radius: 12px;
       background: #d2eeee;
       color: #14989c;
-      margin-bottom: 7px;
+      margin: 0;
       display: flex;
       align-items: center;
-      padding: 0 22px;
-      font-size: 24px;
+      padding: 6px 12px;
+      font-size: 16px;
+      line-height: 1.15;
       cursor: pointer;
       transition: background 0.15s, color 0.15s;
       border: 3px solid transparent;
+      overflow: hidden;
       overflow-wrap: anywhere;
-      word-break: break-word;
+    }
+    .answer-card > div:last-child {
+      max-height: 2.35em;
+      overflow: auto;
+      flex: 1;
+      min-width: 0;
     }
     .answer-card:hover,
     .answer-card.selected  { background: #fff0c9; color: #d39220; }
@@ -949,33 +987,34 @@ function buildStandaloneQuizHtml(exportData, title) {
     .answer-card.incorrect { background: #df4375; color: white; }
 
     .radio-circle {
-      width: 45px;
-      height: 45px;
+      width: 28px;
+      height: 28px;
       border-radius: 50%;
       background: white;
-      border: 7px solid #aab5b8;
-      margin-right: 38px;
+      border: 5px solid #aab5b8;
+      margin-right: 12px;
       flex-shrink: 0;
     }
     .answer-card.selected .radio-circle { background: #f2c44d; }
 
     .submit-btn, .continue-btn {
       background: #0c9695;
-      border-radius: 28px;
+      border-radius: 22px;
       display: none;
-      margin: 25px auto 0;
-      padding: 12px 46px;
+      margin: 10px auto 0;
+      padding: 9px 34px;
+      font-size: 16px;
     }
     .continue-btn {
       display: block;
       position: absolute;
-      bottom: 32px;
+      bottom: 20px;
       left: 50%;
       transform: translateX(-50%);
+      margin: 0;
     }
 
-    /* ── Right panel ── */
-    .question-right { position: relative; }
+    .question-right { position: relative; min-width: 0; }
     .image-placeholder {
       width: 100%;
       height: 100%;
@@ -983,13 +1022,14 @@ function buildStandaloneQuizHtml(exportData, title) {
       align-items: center;
       justify-content: center;
       color: #8aa7b5;
-      font-size: 24px;
+      font-size: 16px;
+      overflow: hidden;
+      background: #e9f1f5;
     }
     .question-image {
-      width: 300px;
-      height: 520px;
+      width: 100%;
+      height: 100%;
       object-fit: cover;
-      border-radius: 20px;
       background: #e9f1f5;
     }
     .feedback-panel {
@@ -997,38 +1037,41 @@ function buildStandaloneQuizHtml(exportData, title) {
       background: #c5e3ef;
       width: 100%;
       height: 100%;
-      padding: 45px 45px 110px;
+      padding: 28px 24px 82px;
       position: relative;
+      overflow: auto;
     }
     .feedback-panel.show { display: block; }
     .feedback-image {
-      height: 260px;
+      height: 170px;
       display: flex;
       align-items: center;
       justify-content: center;
+      margin-bottom: 10px;
     }
     .feedback-img {
-      max-height: 260px;
+      max-height: 170px;
       max-width: 100%;
       object-fit: contain;
     }
     .feedback-badge {
-      width: 250px;
-      margin: -10px auto 30px;
+      width: 205px;
+      margin: 0 auto 18px;
       text-align: center;
       color: white;
       font-weight: bold;
-      font-size: 28px;
-      border-radius: 28px;
-      padding: 12px 20px;
+      font-size: 20px;
+      border-radius: 24px;
+      padding: 9px 16px;
       letter-spacing: 1px;
     }
     .feedback-badge.correct   { background: #50bd98; }
     .feedback-badge.incorrect { background: #df4375; }
     .feedback-text {
-      font-size: 24px;
-      line-height: 1.15;
+      font-size: 17px;
+      line-height: 1.25;
       color: #23475c;
+      overflow-wrap: anywhere;
     }
 
     /* ── Results slide ── */
@@ -1037,15 +1080,15 @@ function buildStandaloneQuizHtml(exportData, title) {
       justify-content: center;
       align-items: center;
     }
-    .results-card { width: 560px; text-align: center; }
-    .results-top  { background: #0f9691; color: white; padding: 14px 30px 38px; }
+    .results-card { width: 470px; text-align: center; }
+    .results-top  { background: #0f9691; color: white; padding: 12px 26px 26px; }
     .results-top h2 {
       margin: 0 0 22px;
-      font-size: 33px;
+      font-size: 28px;
       letter-spacing: 8px;
       font-weight: normal;
     }
-    .stars { display: flex; justify-content: center; gap: 8px; font-size: 78px; }
+    .stars { display: flex; justify-content: center; gap: 8px; font-size: 62px; }
     .star  { position: relative; color: #dce8ed; display: inline-block; }
     .star.full { color: #f4c34b; }
     .star.half::before {
@@ -1056,25 +1099,43 @@ function buildStandaloneQuizHtml(exportData, title) {
       overflow: hidden;
       color: #f4c34b;
     }
-    .results-bottom { background: #cfeef7; padding: 30px; }
-    .score-display  { font-size: 38px; color: #0f9691; margin-bottom: 25px; }
-    .review-btn     { background: #0f9691; border-radius: 26px; font-size: 24px; padding: 12px 42px; }
+    .results-bottom { background: #cfeef7; padding: 24px; }
+    .score-display  { font-size: 32px; color: #0f9691; margin-bottom: 25px; }
+    .review-btn     { background: #0f9691; border-radius: 26px; font-size: 20px; padding: 10px 36px; }
 
     .review-arrow {
-      position: fixed;
-      top: 52%;
-      transform: translateY(-50%);
-      width: 80px;
-      height: 190px;
-      border-radius: 0 100px 100px 0;
-      background: #0f9691;
-      color: white;
-      font-size: 70px;
-      padding: 0;
-      z-index: 50;
-    }
-    .review-arrow.left  { left: 0; }
-    .review-arrow.right { right: 0; border-radius: 100px 0 0 100px; }
+    position: fixed;
+    top: 50%;
+    transform: translateY(-50%);
+
+    width: 74px;
+    height: 150px;
+
+    background: #0f9691;
+    color: #fff;
+
+    border: none;
+    cursor: pointer;
+
+    font-size: 58px;
+    font-weight: bold;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    z-index: 9999;
+}
+
+.review-arrow.left {
+    left: calc(50% - 360px + 37px);
+    border-radius: 0 75px 75px 0;
+}
+
+.review-arrow.right {
+    left: calc(50% + 360px - 37px);
+    border-radius: 75px 0 0 75px;
+}
   </style>
 </head>
 <body>
@@ -1129,6 +1190,18 @@ function buildStandaloneQuizHtml(exportData, title) {
   <script>
     const originalQuizData = ${JSON.stringify(exportData.questions)};
     let activeQuiz = [], currentQuestionIndex = 0, selectedAnswerIndex = null;
+
+    // Storyline-style responsive player scaling: preserve the 720 × 540
+    // design canvas while filling as much of the browser as possible.
+    function scaleQuizToViewport() {
+      const scale = Math.min(window.innerWidth / 720, window.innerHeight / 540);
+      document.documentElement.style.setProperty("--quiz-scale", String(scale));
+    }
+      
+
+    window.addEventListener("resize", scaleQuizToViewport);
+    window.addEventListener("orientationchange", scaleQuizToViewport);
+    scaleQuizToViewport();
     let score = 0, submitted = false, reviewMode = false, userAnswers = [], completedFired = false;
 
     function shuffleArray(arr) { return [...arr].sort(() => Math.random() - 0.5); }
@@ -1375,15 +1448,43 @@ function buildStandaloneQuizHtml(exportData, title) {
     }
 
     function addReviewNavigation() {
-      removeReviewNavigation();
-      const nav = document.createElement("div");
-      nav.id = "reviewNav";
-      nav.innerHTML = \`
-        <button class="review-arrow left"  onclick="previousReviewQuestion()">‹</button>
-        <button class="review-arrow right" onclick="nextReviewQuestion()">›</button>
-      \`;
-      document.body.appendChild(nav);
-    }
+  removeReviewNavigation();
+
+  const nav = document.createElement("div");
+  nav.id = "reviewNav";
+
+  nav.innerHTML = \`
+  <button id="leftReviewArrow" class="review-arrow left" onclick="previousReviewQuestion()">‹</button>
+  <button id="rightReviewArrow" class="review-arrow right" onclick="nextReviewQuestion()">›</button>
+\`;
+
+  document.body.appendChild(nav);
+
+  positionReviewArrows();
+}
+
+function positionReviewArrows() {
+
+  const left = document.getElementById("leftReviewArrow");
+  const right = document.getElementById("rightReviewArrow");
+
+  if (!left || !right) return;
+
+  // Width of the scaled quiz stage
+  const stageWidth = document.getElementById("questionSlide").getBoundingClientRect().width;
+
+  // Left edge of the stage
+  const stageLeft = (window.innerWidth - stageWidth) / 2;
+
+  // Right edge
+  const stageRight = stageLeft + stageWidth;
+
+  // Position arrows 18px inside the stage
+  left.style.left = (stageLeft + 18) + "px";
+  right.style.left = (stageRight - right.offsetWidth - 18) + "px";
+}
+
+
 
     function previousReviewQuestion() {
       if (currentQuestionIndex === 0) { showResults(); return; }
@@ -1395,10 +1496,12 @@ function buildStandaloneQuizHtml(exportData, title) {
       currentQuestionIndex++; renderReviewQuestion();
     }
 
-    function removeReviewNavigation() {
-      const nav = document.getElementById("reviewNav");
-      if (nav) nav.remove();
-    }
+    window.addEventListener("resize", positionReviewArrows);
+
+function removeReviewNavigation() {
+  const nav = document.getElementById("reviewNav");
+  if (nav) nav.remove();
+}
   <\/script>
 </body>
 </html>`;
