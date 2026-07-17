@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="250" height="260" viewBox="0 0 250 260">
+  <rect width="250" height="260" rx="16" fill="#c94f78" opacity="0.12"/>
+  <path d="M125 60 a38 38 0 0 1 22 68 v14 h-44 v-14 a38 38 0 0 1 22 -68 z" fill="#c94f78" opacity="0.6"/>
+  <rect x="110" y="148" width="30" height="8" rx="3" fill="#c94f78" opacity="0.8"/>
+  <rect x="113" y="160" width="24" height="7" rx="3" fill="#c94f78" opacity="0.8"/>
+  <text x="125" y="225" font-family="Arial" font-size="18" font-weight="bold" fill="#c94f78" text-anchor="middle">Keep learning</text>
+</svg>

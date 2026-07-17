@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="250" height="260" viewBox="0 0 250 260">
+  <rect width="250" height="260" rx="16" fill="#df4375" opacity="0.12"/>
+  <circle cx="125" cy="110" r="58" fill="#df4375" opacity="0.18"/>
+  <circle cx="105" cy="98" r="7" fill="#df4375" opacity="0.8"/>
+  <circle cx="145" cy="98" r="7" fill="#df4375" opacity="0.8"/>
+  <path d="M100 138 q25 -22 50 0" stroke="#df4375" stroke-width="7" fill="none" stroke-linecap="round"/>
+  <text x="125" y="215" font-family="Arial" font-size="20" font-weight="bold" fill="#df4375" text-anchor="middle">Not quite</text>
+</svg>

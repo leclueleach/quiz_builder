@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="250" height="260" viewBox="0 0 250 260">
+  <rect width="250" height="260" rx="16" fill="#d13c6c" opacity="0.12"/>
+  <circle cx="125" cy="105" r="58" fill="#d13c6c" opacity="0.15"/>
+  <path d="M108 130 v-40 h-12 v40 z" fill="#d13c6c" opacity="0.8"/>
+  <path d="M120 130 c0 0 4 25 12 25 c10 0 6 -18 6 -18 h16 c6 0 10 -5 8 -11 l-8 -26 c-1 -6 -6 -10 -12 -10 h-22 z" fill="#d13c6c" opacity="0.8"/>
+  <text x="125" y="220" font-family="Arial" font-size="20" font-weight="bold" fill="#d13c6c" text-anchor="middle">Oops</text>
+</svg>

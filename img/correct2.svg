@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="250" height="260" viewBox="0 0 250 260">
+  <rect width="250" height="260" rx="16" fill="#50bd98" opacity="0.12"/>
+  <path d="M95 70 h60 v25 a30 30 0 0 1 -60 0 z" fill="#50bd98" opacity="0.7"/>
+  <rect x="118" y="120" width="14" height="30" fill="#50bd98" opacity="0.7"/>
+  <rect x="100" y="150" width="50" height="12" rx="4" fill="#50bd98" opacity="0.7"/>
+  <path d="M95 75 h-15 a15 15 0 0 0 15 25 z" fill="#50bd98" opacity="0.5"/>
+  <path d="M155 75 h15 a15 15 0 0 1 -15 25 z" fill="#50bd98" opacity="0.5"/>
+  <text x="125" y="210" font-family="Arial" font-size="20" font-weight="bold" fill="#50bd98" text-anchor="middle">Well done!</text>
+</svg>

@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="250" height="260" viewBox="0 0 250 260">
+  <rect width="250" height="260" rx="16" fill="#50bd98" opacity="0.15"/>
+  <circle cx="125" cy="110" r="60" fill="#50bd98" opacity="0.5"/>
+  <path d="M100 110 l18 18 l34 -38" stroke="#50bd98" stroke-width="10" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="125" y="210" font-family="Arial" font-size="20" font-weight="bold" fill="#50bd98" text-anchor="middle">Correct 1</text>
+</svg>
