@@ -1,7 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="300" height="520" viewBox="0 0 300 520">
-  <rect width="300" height="520" rx="20" fill="#df4375" opacity="0.15"/>
-  <rect x="20" y="20" width="260" height="480" rx="16" fill="#df4375" opacity="0.3"/>
-  <circle cx="150" cy="200" r="70" fill="#df4375" opacity="0.6"/>
-  <text x="150" y="320" font-family="Arial" font-size="28" font-weight="bold" fill="#df4375" text-anchor="middle">Image 1</text>
-  <text x="150" y="360" font-family="Arial" font-size="16" fill="#df4375" text-anchor="middle" opacity="0.7">Replace me</text>
-</svg>
