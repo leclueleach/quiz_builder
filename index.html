@@ -34,16 +34,21 @@
         <option value="5">5 Questions</option>
         <option value="10">10 Questions</option>
       </select>
-      <button type="button" onclick="generateQuestionFields()">Create / Reset Quiz</button>
+      <button type="button" onclick="resetQuiz()">Create / Reset Quiz</button>
 
       <details class="advanced-settings">
         <summary>Advanced settings</summary>
-        <label class="checkbox-row" for="passPercentageEnabled">
-          <input type="checkbox" id="passPercentageEnabled">
-          Enable pass percentage
+        <label class="check-row" for="randomizePreview">
+          <input type="checkbox" id="randomizePreview" checked>
+          Randomise question order in preview
         </label>
-        <label for="passPercentage">Pass percentage</label>
-        <input type="number" id="passPercentage" min="0" max="100" value="50" disabled>
+        <p class="setting-note">Uncheck this when you need to review the questions in builder order.</p>
+
+        <label class="check-row" for="randomizeExport">
+          <input type="checkbox" id="randomizeExport" checked>
+          Randomise question order in export
+        </label>
+        <p class="setting-note">Keep this checked for normal platform exports.</p>
       </details>
 
       <div class="correct-answer-control" id="correctAnswerControl">
@@ -60,34 +65,102 @@
       <label for="importHtmlFile">Import standalone HTML</label>
       <input type="file" id="importHtmlFile" accept=".html">
       <button type="button" class="secondary" onclick="importStandaloneHtml()">Import HTML</button>
+
+      <details class="ai-import-help">
+        <summary id="aiImportHelpTitle">Convert a Word or PowerPoint quiz</summary>
+        <div class="ai-import-help-content">
+          <p>To convert a Word or PowerPoint quiz file into this builder:</p>
+          <ol>
+            <li>Copy the prompt below.</li>
+            <li>Open <a href="https://claude.ai/" target="_blank" rel="noopener noreferrer">Claude</a> or <a href="https://chatgpt.com/" target="_blank" rel="noopener noreferrer">ChatGPT</a>.</li>
+            <li>Paste the prompt and upload your <strong>.docx</strong> or <strong>.pptx</strong> file.</li>
+            <li>Download the HTML file the AI returns.</li>
+            <li>Use <strong>Import Standalone HTML</strong> above to load it into the builder.</li>
+          </ol>
+          <button type="button" class="secondary copy-prompt-button" id="copyPromptButton" onclick="copyAiPrompt()">Copy Prompt</button>
+          <textarea id="aiPrompt" class="visually-hidden" aria-hidden="true" tabindex="-1">I have a quiz in the attached Word/PowerPoint file. Please convert it into the following standalone HTML format so I can import it into my quiz builder.
+
+IMPORTANT RULES:
+- Extract every question, all 4 answer options, which answer is correct, and the feedback text
+- Preserve all formatting: bold, italic, superscript (e.g. x²), subscript (e.g. H₂O), and special characters (±, ×, ÷, π, √, °, ≤, ≥)
+- If there is no feedback for a question, leave the feedback field as an empty string ""
+- Output ONLY the HTML file — no explanation, no markdown code fences
+
+The HTML file must contain this exact JavaScript data structure:
+
+const originalQuizData = [
+  {
+    "question": "Question text here (can contain HTML like <sup>2</sup>)",
+    "answers": [
+      "Answer 1 text",
+      "Answer 2 text",
+      "Answer 3 text",
+      "Answer 4 text"
+    ],
+    "correctIndex": 0,
+    "feedback": "Feedback text here"
+  }
+];
+
+Where correctIndex is 0 for Answer 1, 1 for Answer 2, 2 for Answer 3, 3 for Answer 4.
+
+Wrap it in this minimal HTML shell:
+
+<!DOCTYPE html>
+<html>
+<head><title>Quiz Title Here</title></head>
+<body>
+<script>
+const originalQuizData = [ ... your data here ... ];
+&lt;/script>
+</body>
+</html>
+
+Please convert the attached file now and return only the HTML file.</textarea>
+        </div>
+      </details>
     </aside>
 
     <section class="workspace">
       <div class="shared-toolbar" id="sharedToolbar" aria-label="Text formatting toolbar">
         <span id="activeFieldLabel">Select a text field</span>
-        <select id="fontSizeControl" onchange="formatActiveFontSize(this.value)">
+        <select id="fontSizeControl" aria-label="Font size" onchange="formatActiveFontSize(this.value)">
           <option value="">Size</option>
           <option value="40">40</option><option value="32">32</option><option value="24">24</option>
           <option value="20">20</option><option value="18">18</option><option value="16">16</option>
-          <option value="14">14</option><option value="13">13</option>
+          <option value="14.67">14.67</option><option value="14">14</option>
+          <option value="13.33">13.33</option><option value="13">13</option><option value="12">12</option>
         </select>
-        <button type="button" onclick="formatActiveText('bold')"><b>B</b></button>
-        <button type="button" onclick="formatActiveText('italic')"><i>I</i></button>
-        <button type="button" onclick="formatActiveText('underline')"><u>U</u></button>
-        <button type="button" onclick="formatActiveText('superscript')">X²</button>
-        <button type="button" onclick="formatActiveText('subscript')">X₂</button>
-        <button type="button" onclick="formatActiveText('insertUnorderedList')">• List</button>
-        <button type="button" onclick="formatActiveText('insertOrderedList')">1. List</button>
+        <button type="button" id="formatBoldButton" data-command="bold" aria-label="Bold" aria-pressed="false" onclick="formatActiveText('bold')"><b>B</b></button>
+        <button type="button" id="formatItalicButton" data-command="italic" aria-label="Italic" aria-pressed="false" onclick="formatActiveText('italic')"><i>I</i></button>
+        <button type="button" id="formatUnderlineButton" data-command="underline" aria-label="Underline" aria-pressed="false" onclick="formatActiveText('underline')"><u>U</u></button>
+        <button type="button" id="formatSuperscriptButton" data-command="superscript" aria-label="Superscript" aria-pressed="false" onclick="formatActiveText('superscript')">X²</button>
+        <button type="button" id="formatSubscriptButton" data-command="subscript" aria-label="Subscript" aria-pressed="false" onclick="formatActiveText('subscript')">X₂</button>
+        <button type="button" id="formatUnorderedListButton" data-command="insertUnorderedList" aria-label="Bulleted list" aria-pressed="false" onclick="formatActiveText('insertUnorderedList')">• List</button>
+        <button type="button" id="formatOrderedListButton" data-command="insertOrderedList" aria-label="Numbered list" aria-pressed="false" onclick="formatActiveText('insertOrderedList')">1. List</button>
         <select id="symbolControl" onchange="insertActiveSymbol(this.value)">
           <option value="">Symbol</option><option>²</option><option>³</option><option>₀</option><option>₁</option>
           <option>₂</option><option>₃</option><option>°</option><option>±</option><option>×</option>
           <option>÷</option><option>≤</option><option>≥</option><option>√</option><option>π</option>
         </select>
-        <button type="button" onclick="toggleActiveHtmlMode()">&lt;/&gt;</button>
+        <button type="button" id="htmlModeButton" aria-label="Toggle HTML editor" aria-expanded="false" aria-pressed="false" onclick="toggleActiveHtmlMode()">&lt;/&gt;</button>
       </div>
 
       <nav id="questionTabs" class="page-navigation"></nav>
-      <div id="questionsContainer" class="canvas-area"></div>
+      <div id="canvasWorkbench" class="canvas-workbench">
+        <div id="questionsContainer" class="canvas-area"></div>
+        <aside id="htmlEditorPanel" class="html-editor-panel" aria-hidden="true" aria-label="HTML editor">
+          <div class="html-editor-header">
+            <div>
+              <strong>HTML editor</strong>
+              <span id="htmlEditorFieldLabel">Selected text field</span>
+            </div>
+            <button type="button" class="html-editor-close" onclick="closeHtmlEditorPanel()">Close</button>
+          </div>
+          <textarea id="sharedHtmlEditor" class="shared-html-code-editor" aria-label="HTML source" spellcheck="false"></textarea>
+          <p class="html-editor-note">Changes update the selected text box immediately.</p>
+        </aside>
+      </div>
       <div class="page-controls">
         <button type="button" class="secondary" onclick="moveBuilderPage(-1)">Previous</button>
         <span id="pageIndicator"></span>
