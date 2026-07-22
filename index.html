@@ -90,7 +90,7 @@ The HTML file must contain this exact JavaScript data structure:
 
 const originalQuizData = [
   {
-    "question": "Question text here (can contain HTML like <sup>2</sup>)",
+    "question": "Question text here (can contain HTML like &lt;sup&gt;2&lt;/sup&gt;)",
     "answers": [
       "Answer 1 text",
       "Answer 2 text",
@@ -106,15 +106,15 @@ Where correctIndex is 0 for Answer 1, 1 for Answer 2, 2 for Answer 3, 3 for Answ
 
 Wrap it in this minimal HTML shell:
 
-<!DOCTYPE html>
-<html>
-<head><title>Quiz Title Here</title></head>
-<body>
-<script>
+&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+&lt;head&gt;&lt;title&gt;Quiz Title Here&lt;/title&gt;&lt;/head&gt;
+&lt;body&gt;
+&lt;script&gt;
 const originalQuizData = [ ... your data here ... ];
-&lt;/script>
-</body>
-</html>
+&lt;/script&gt;
+&lt;/body&gt;
+&lt;/html&gt;
 
 Please convert the attached file now and return only the HTML file.</textarea>
         </div>
