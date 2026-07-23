@@ -7,6 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/png" href="img/favicon.png">
   <link rel="stylesheet" href="style.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 </head>
@@ -44,9 +45,21 @@
         </label>
         <p class="setting-note">Uncheck this when you need to review the questions in builder order.</p>
 
+        <label class="check-row" for="randomizeAnswersPreview">
+          <input type="checkbox" id="randomizeAnswersPreview" checked>
+          Randomise answer options in preview
+        </label>
+        <p class="setting-note">Uncheck this to keep Answer 1 to Answer 4 in builder order during preview.</p>
+
         <label class="check-row" for="randomizeExport">
           <input type="checkbox" id="randomizeExport" checked>
           Randomise question order in export
+        </label>
+        <p class="setting-note">Keep this checked for normal platform exports.</p>
+
+        <label class="check-row" for="randomizeAnswersExport">
+          <input type="checkbox" id="randomizeAnswersExport" checked>
+          Randomise answer options in export
         </label>
         <p class="setting-note">Keep this checked for normal platform exports.</p>
       </details>
